@@ -1,14 +1,15 @@
-#!/usr/bin/sh
+#!/usr/bin/env bash
 #
 # --------------------------------------------------------------------------------
 # - 
 # - GITLIB
 # - Library of utility functions and standardizing for daily/commonly used
 # - GIT commands
-# - Version: 1.0
+# - Version: 1.1-SENIOR
 # - 
 # - Author: Luiz Felipe Nazari
-# -        luiz.nazari.42@gmail.com
+# -         luiz.nazari.42@gmail.com
+# -         luiz.nazari@senior.com.br
 # - All rights reserved.
 # - 
 # --------------------------------------------------------------------------------
@@ -17,11 +18,11 @@
 # - GitLib
 # ------------------------------
 
-# - Constants
+# - Global Variables
 # --------------------
 
-GL_REFS_STRING="refs #0000"
-GL_REFS_REGEX="refs[[:space:]]+#[[:digit:]]*[^[:alpha:]]"
+GL_TASK_PREFIX=""
+GL_LOGLEVEL=2 #INFO
 
 # - Commands
 # --------------------
@@ -29,19 +30,17 @@ GL_REFS_REGEX="refs[[:space:]]+#[[:digit:]]*[^[:alpha:]]"
 gcommit() {
 	branch=$(_get_curr_branch);
 	args=${@##-*}
-		
+	
 	if [ -z "$branch" ]; then
         _log err "Current directory is not a git repository"
     	return "1"
 
-    
-    
     elif [ -z "$args" ]; then
         _log err "Please, insert a message to confirm the commit"
 		return "1"
-		
+
     else
-		if ! _do_commit "$branch" "$args"; then
+		if ! _do_commit "$args"; then
 			return "1"
 		fi
 		
@@ -104,12 +103,16 @@ gout() {
 	if [ $# -eq 1 ]; then
         _log debug "Switching current branch to $1"
         _log debug "git checkout $1"
-		git checkout "$1"
+		if [ "$GL_DEBUG_MODE_ENABLED" = false ]; then
+			git checkout "$1"
+		fi
         
 	elif [ $# -eq 2 ]; then
         _log debug "Switching current branch to $2"
         _log debug "git checkout $1 $2"
-		git checkout "$1" "$2"
+		if [ "$GL_DEBUG_MODE_ENABLED" = false ]; then
+			git checkout "$1" "$2"
+		fi
         
 	else
 		_log err "Branch name not specified"
@@ -146,57 +149,64 @@ gstatus() {
 	fi
 }
 
-# - Functions
-# --------------------
+# Undo all local commits and changes (stagged and unstagged). 
+greset() {
+	continue_msg="(y/n)"
+	echo "Are you sure you want to discard all local stagged and unstagged changes? This action cannot be undone. $continue_msg"
 
-_do_commit() {
-	comentario=$(_commit_refs $1 "$2")
+	while true; do
+		read -p "> " response
 
-	if ! [[ $comentario =~ $GL_REFS_REGEX ]]; then
-	
-		while true; do
-            echo -e "The commit does not refers to a task, e.g.: \"$GL_REFS_STRING\". Continue? (y/n/task number)"
-			read -p "> " response
+		if [[ $response =~ ^[YySs]$ ]]; then
+			_log debug "git checkout ."
+			_log debug "git reset ."
+			_log debug "git reset --soft HEAD"
 
-			if [[ $response =~ ^[YySs]$ ]]; then
-				break
-				
-			elif [[ $response =~ ^[Nn]$ ]]; then
-				_log warn "Commit cancelado"
-				return "1"
-
-			elif [[ $response =~ ^[[:digit:]]{1,}$ ]]; then
-				comentario=$(_commit_refs "b_task_$response" "$2")
-				break
+			if [ "$GL_DEBUG_MODE_ENABLED" = false ]; then
+				git checkout . 
+				git reset .
+				git reset --soft HEAD
 			fi
-		done
-		
-	fi
+			break
 
-	_log debug "Commiting all files"
-	_log debug "git add ."
-	_log debug "git commit -m \"$comentario\""
-	
-	if [ "$GL_DEBUG_MODE_ENABLED" = false ]; then
-		git add .
-		git commit -m "$comentario"
-	fi
-	
-	#Returns the exit status of "git commit"
-	return "$?"
+		elif [[ $response =~ ^[Nn]$ ]]; then
+			_log warn "Reset aborted"
+			return "1"
+		fi
+
+		echo $continue_msg
+	done
 }
 
-_commit_refs() {
-	if [[ $1 == *b_task_* ]]; then
-        task="${1#*b_task_}"
-		commitRefs="${GL_REFS_STRING/\#[[:digit:]]*/#$task}"
-        
-	elif [[ $1 == *b_* ]]; then
-		commitRefs="${1#*b_}"
-        
-	else
-		commitRefs="$1"
-	fi
-    
-    expr "$commitRefs [$2]"
+# - Configurations
+# --------------------
+
+gconfig() {
+	 case $1 in
+        task-prefix )
+            if [ -z "$2" ]; then
+              _log err "Task prefix not specified."
+            else
+                GL_TASK_PREFIX=$2
+            fi
+            ;;
+
+		loglevel )
+            case $2 in
+                err* )   let "GL_LOGLEVEL = 0" ;;
+                war* )   let "GL_LOGLEVEL = 1" ;;
+                inf* )   let "GL_LOGLEVEL = 2" ;;
+                debug* ) let "GL_LOGLEVEL = 3" ;;
+                *) _log err "Log level must be: error, warn, info or debug."
+            esac
+            ;;
+
+        debug-mode )
+            if [[ "$2" = false ]] || [[ "$2" = true ]]; then
+                GL_DEBUG_MODE_ENABLED=$2
+            fi
+            ;;
+            
+		*) _log err "Configuration \"$1\" not found" ;;
+	esac
 }
