@@ -66,13 +66,14 @@ Current branch: **master**
 
 ----
 
-### `gcommit [-p] <message>`
+### `gcommit [-p] [-s] <message>`
 
 #### Arguments:
 * `\<message\>`: The commit message.
 
 #### Options:
 * `-p`: Push the commit.
+* `-s`: Commits only already stagged files. 
 
 #### Description:
 
@@ -88,6 +89,8 @@ If the branch name contains a task number, it'll be used in the commit message, 
 **IMPORTANT**: The commit message passed as argument is customized based on the **current branch name**. If the branch name match the pattern:
 * b_task_1234: The message will be formatted using the task number 1234.
 
+IF the commit prefix is `REVERT`, instead of asking for the task number, you'll be prompted to speficy the ID of the target commit (SHA1 hash).
+
 #### Examples:
 Current branch: **master**
 > \> `gcommit -p "Added the save button click event"` <br>
@@ -98,9 +101,17 @@ Current branch: **master**
 > \> `git commit -m "[FEAT][#PREFIX-123, #PREFIX-456]: Added the save button click event"` <br>
 > \> `git push origin master` <br>
 
+Current branch: **master**
+> \> `gcommit -s "Added tests to the save button click event"` <br>
+> \> Answer 1: TEST <br>
+> \> Answer 2: 123 <br>
+> \# Will result in the following commands: <br>
+> \> `git commit -m "[TEST][#PREFIX-123]: Added tests to the save button click event event"` <br>
+
 Current branch: **b_task_1234**
 > \> `gcommit "Added the save button click event"` <br>
 > \> Answer 1: FIX <br>
+> \# Will not ask the task number <br>
 > \# Will result in the following commands: <br>
 > \> `git add .` <br>
 > \> `git commit -m "[FIX][#PREFIX-1234]: Added the save button click event"`
@@ -161,22 +172,36 @@ Current branch: **master**
 > \# Will result in the following commands:
 > \> `git status`
 
+----
+
+### `greset`
+
+#### Description:
+
+Discards all stagged and unstagged changes and local (unpushed) commits. Only use this if you are *really sure* of what you are doing. There is no comming back.
+
+#### Examples:
+
+> \> `greset` <br>
+> \# Will result in the following commands: <br>
+> \> `git checkout .` <br>
+> \> `git reset .` <br>
+> \> `git reset --soft HEAD`
+
 <br>
 
 ## Configuration
 
 There are some options that can be configured. All the configurations can be changed using the `gconfig` command while passing the configuration name as arguments. The following items are the currently available options:
 
-### `gconfig task-prefix <new_prefix>`
+### `gconfig default-task-prefix <new_prefix>`
 
 #### Arguments:
 * `<new_prefix>`: The prefix used before the task number
 
 #### Description:
 
-Changes the actual task-reference prefix that is used within the `gcommit` command.
-
-**IMPORTANT**: There's no default value, it needs to be set.
+Changes the actual task-reference prefix that is used within the `gcommit` command. It's used to compose the Jira task ID.
 
 ----
 

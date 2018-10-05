@@ -21,7 +21,7 @@
 # - Global Variables
 # --------------------
 
-GL_TASK_PREFIX=""
+GL_DEFAULT_TASK_PREFIX=""
 GL_LOGLEVEL=2 #INFO
 
 # - Commands
@@ -40,19 +40,27 @@ gcommit() {
 		return "1"
 
     else
-		if ! _do_commit "$args"; then
-			return "1"
-		fi
-		
+		auto_push=false
+		stagged_only=false
+
 		let "OPTIND = 1";
-		while getopts "p" opcao
+		while getopts "ps" opcao
 		do
 			case "$opcao" in
-				"p") gpush "$branch" ;;
+				"s") stagged_only=true ;;
+				"p") auto_push=true ;;
 				"?") _log warn "Unknown option \"$OPTARG\"" ;;
 				":") _log err "Arguments not specified for option \"$OPTARG\"" ;;
 			esac
 		done
+
+		if ! _do_commit "$args" $stagged_only; then
+			return "1"
+		fi
+
+		if [ "$auto_push" = true ]; then
+			gpush "$branch"
+		fi
 		
 	fi
 	
@@ -183,11 +191,11 @@ greset() {
 
 gconfig() {
 	 case $1 in
-        task-prefix )
+        default-task-prefix )
             if [ -z "$2" ]; then
               _log err "Task prefix not specified."
             else
-                GL_TASK_PREFIX=$2
+                GL_DEFAULT_TASK_PREFIX=$2
             fi
             ;;
 

@@ -78,8 +78,11 @@ _trim() {
 
 # args:
 # 	$1 - commit's message
+# 	$2 - commits only already stagged files
 _do_commit() {
-	if [[ -z "$GL_TASK_PREFIX" ]]; then
+	stagged_only=$2
+
+	if [[ -z "$GL_DEFAULT_TASK_PREFIX" ]]; then
 		_log err "Task prefix not specified! Use 'gconfig task-prefix <prefix>' to configure."
 		return "1"
 	fi
@@ -95,7 +98,7 @@ _do_commit() {
 		commit_prefix=""
 
 		_request_commit_prefix() {
-			prefixes=(FIX FEAT TEST REFACTOR DOC REVERT)
+			prefixes=(FIX FEAT TEST REFACTOR DOC REVERT, CANCEL)
 
 			_select_option \
 				"FIX - Correções." \
@@ -103,7 +106,8 @@ _do_commit() {
 				"TEST - Alterações referentes a testes (adicionar testes, corrigir antigos, refatorá-los, etc.)." \
 				"REFACTOR - Refatoração de código existente (melhorar performance de um método, retirar duplicação de código, etc.)." \
 				"DOC - Correção ou implementação de documentação." \
-				"REVERT - Reverter algum commit anterior."
+				"REVERT - Reverter algum commit anterior." \
+				"CANCEL - Aborts the commit"
 
 			selectedOption=$?
 			commit_prefix="${prefixes[selectedOption]}"
@@ -129,7 +133,6 @@ _do_commit() {
 						break
 
 					elif [[ $response =~ ^[Nn]$ ]]; then
-						_log warn "Commit aborted"
 						aborted=true
 						return "1"
 
@@ -158,7 +161,6 @@ _do_commit() {
 					continue
 				
 				elif [[ $response =~ ^[Nn]$ ]]; then
-					_log warn "Commit aborted"
 					aborted=true
 					return "1"
 					
@@ -174,8 +176,13 @@ _do_commit() {
 		}
 
 		_request_commit_prefix
-		if [[ "$commit_prefix" = "REVERT" ]]; then
+		if [[ "$commit_prefix" = "CANCEL" ]]; then
+			aborted=true
+			return "1"
+
+		elif [[ "$commit_prefix" = "REVERT" ]]; then
 			_request_commit_hash
+
 		else
 			_request_task_number
 		fi
@@ -189,15 +196,22 @@ _do_commit() {
 	_format_commit_message "$1"
 
 	if [ "$aborted" = true ]; then
+		_log warn "Commit aborted"
 		return "1"
 	fi
 
-	_log debug "Commiting all files"
-	_log debug "git add ."
+	if [ "$stagged_only" = false ]; then
+		_log debug "Commiting unstagged, stagged and new files"
+		_log debug "git add ."
+	else
+		_log debug "Commiting stagged files"
+	fi
 	_log debug "git commit -m \"$commit_message\""
 	
 	if [ "$GL_DEBUG_MODE_ENABLED" = false ]; then
-		git add .
+		if [ "$stagged_only" = false ]; then
+			git add .
+		fi
 		git commit -m "$commit_message"
 	fi
 	
@@ -212,7 +226,7 @@ _format_tasks_message() {
 	tasks_message=""
 
 	for taskNumber in "${taskNumbers[@]}"; do
-		tasks_message+="#$GL_TASK_PREFIX-$(_trim $taskNumber) "
+		tasks_message+="#$GL_DEFAULT_TASK_PREFIX-$(_trim $taskNumber) "
 	done
 
 	expr "$(_trim $tasks_message)"
