@@ -81,12 +81,6 @@ _trim() {
 # 	$2 - commits only already stagged files
 _do_commit() {
 	stagged_only=$2
-
-	if [[ -z "$GL_DEFAULT_TASK_PREFIX" ]]; then
-		_log err "Task prefix not specified! Use 'gconfig task-prefix <prefix>' to configure."
-		return "1"
-	fi
-
 	aborted=false
 	commit_message=""
 
@@ -96,9 +90,10 @@ _do_commit() {
 	_format_commit_message() {
 		commit_refs=""
 		commit_prefix=""
+		commit_task_prefix=""
 
-		_request_commit_prefix() {
-			prefixes=(FIX FEAT TEST REFACTOR DOC REVERT, CANCEL)
+		_request_commit_task_prefix() {
+			prefixes=(FIX FEAT TEST REFACTOR DOC REVERT CANCEL)
 
 			_select_option \
 				"FIX - Correções." \
@@ -110,7 +105,7 @@ _do_commit() {
 				"CANCEL - Aborts the commit"
 
 			selectedOption=$?
-			commit_prefix="${prefixes[selectedOption]}"
+			commit_task_prefix="${prefixes[selectedOption]}"
 		}
 
 		_request_task_number() {
@@ -119,6 +114,22 @@ _do_commit() {
 
 			if [[ $branch == *b_task_* ]]; then
 				task="${1#*b_task_}"
+
+			fi
+			
+			if [[ $branch =~ ^b_([[:alpha:]]+)_([[:digit:]]+)$ ]]; then
+				commit_prefix="${BASH_REMATCH[1]}"
+				task="${BASH_REMATCH[2]}"
+			else
+				commit_prefix="$GL_DEFAULT_TASK_PREFIX"
+			fi
+
+			if [[ -z "$commit_prefix" ]]; then
+				_log err "Task prefix not specified! \
+Change branch name to the b_PREFIX_TASKNUMBER pattern \
+or use 'gconfig default-task-prefix <prefix>' to configure the default prefix."
+				aborted=true
+				return "1"
 			fi
 
 			if [ -z "$task" ]; then
@@ -146,7 +157,7 @@ _do_commit() {
 				
 			fi
 
-			commit_refs=$(_format_tasks_message "$task")
+			commit_refs=$(_format_tasks_message "$commit_prefix" "$task")
 		}
 
 		_request_commit_hash() {
@@ -175,19 +186,19 @@ _do_commit() {
 			commit_refs="$hash"
 		}
 
-		_request_commit_prefix
-		if [[ "$commit_prefix" = "CANCEL" ]]; then
+		_request_commit_task_prefix
+		if [[ "$commit_task_prefix" = "CANCEL" ]]; then
 			aborted=true
 			return "1"
 
-		elif [[ "$commit_prefix" = "REVERT" ]]; then
+		elif [[ "$commit_task_prefix" = "REVERT" ]]; then
 			_request_commit_hash
 
 		else
 			_request_task_number
 		fi
 
-		commit_message="[$commit_prefix][$commit_refs]: $1"
+		commit_message="[$commit_task_prefix][$commit_refs]: $1"
 	}
 
 	# Commit logic:
@@ -220,13 +231,14 @@ _do_commit() {
 }
 
 # args:
-# 	$1 - comma separated string containing the task numbers
+# 	$1 - task prefix
+# 	$2 - comma separated string containing the task numbers
 _format_tasks_message() {
-	IFS=',' read -ra taskNumbers <<< "$1"
+	IFS=',' read -ra taskNumbers <<< "$2"
 	tasks_message=""
 
 	for taskNumber in "${taskNumbers[@]}"; do
-		tasks_message+="#$GL_DEFAULT_TASK_PREFIX-$(_trim $taskNumber) "
+		tasks_message+="#$1-$(_trim $taskNumber) "
 	done
 
 	expr "$(_trim $tasks_message)"

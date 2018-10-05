@@ -192,11 +192,7 @@ greset() {
 gconfig() {
 	 case $1 in
         default-task-prefix )
-            if [ -z "$2" ]; then
-              _log err "Task prefix not specified."
-            else
-                GL_DEFAULT_TASK_PREFIX=$2
-            fi
+			GL_DEFAULT_TASK_PREFIX=$2
             ;;
 
 		loglevel )
