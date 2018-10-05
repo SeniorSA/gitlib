@@ -22,54 +22,10 @@ Further configurations are not necessary.
 
 ## Usage
 
-### `gpull [<branch_name>]`
-
-#### Arguments:
-* `\<branch_name\>`: [Optional] the branch which changes will be pulled, if none is specified, the current branch will be used.
-
-#### Description:
-
-Incorporates remote changes into the current branch.
-
-#### Examples:
-Current branch: **master**
-
-> \> `gpull` <br>
-> \# Will result in the following commands: <br>
-> \> `git pull origin master` 
-
-> \> `gpull other_branch` <br>
-> \# Will result in the following commands: <br>
-> \> `git pull origin other_branch`
-
-----
-
-### `gpush [<branch_name>]`
-
-#### Arguments:
-* `\<branch_name\>`: [Optional] the branch which changes will be pushed, if none is specified, the current branch will be used.
-
-#### Description:
-
-Updates remote branch sending local commits.
-
-#### Examples:
-Current branch: **master**
-
-> \> `gpush` <br>
-> \# Will result in the following commands: <br>
-> \> `git gush origin master`
-
-> \> `gpush other_branch` <br>
-> \# Will result in the following commands: <br>
-> \> `git gush origin other_branch`
-
-----
-
 ### `gcommit [-p] [-s] <message>`
 
 #### Arguments:
-* `\<message\>`: The commit message.
+* `<message>`: The commit message.
 
 #### Options:
 * `-p`: Push the commit.
@@ -84,7 +40,7 @@ When you do a `gcommit`, you'll be prompted to choose the prefix specifying the 
 If the branch name contains a task number, it'll be used in the commit message, otherwise, a task number need to be prompted to confirm the action. The possible answers are:
 * `y` or `s`: Assumes `0` as the task number;
 * `n`: Aborts the commit;
-* `\<number\>`: The task number (e.g.: 1234). Can be multivalued, comma separated values are valid (e.g.: 123, 456).
+* `<number>`: The task number (e.g.: 1234). Can be multivalued, comma separated values are valid (e.g.: 123, 456).
 
 **IMPORTANT**: The commit message passed as argument is customized based on the **current branch name**. If the branch name match the pattern:
 * b_task_1234: The message will be formatted using the task number 1234.
@@ -127,6 +83,50 @@ Current branch: **b_CUSTOMPREFIX_1234**
 
 ----
 
+### `gpull [<branch_name>]`
+
+#### Arguments:
+* `<branch_name>`: [Optional] the branch which changes will be pulled, if none is specified, the current branch will be used.
+
+#### Description:
+
+Incorporates remote changes into the current branch.
+
+#### Examples:
+Current branch: **master**
+
+> \> `gpull` <br>
+> \# Will result in the following commands: <br>
+> \> `git pull origin master` 
+
+> \> `gpull other_branch` <br>
+> \# Will result in the following commands: <br>
+> \> `git pull origin other_branch`
+
+----
+
+### `gpush [<branch_name>]`
+
+#### Arguments:
+* `<branch_name>`: [Optional] the branch which changes will be pushed, if none is specified, the current branch will be used.
+
+#### Description:
+
+Updates remote branch sending local commits.
+
+#### Examples:
+Current branch: **master**
+
+> \> `gpush` <br>
+> \# Will result in the following commands: <br>
+> \> `git gush origin master`
+
+> \> `gpush other_branch` <br>
+> \# Will result in the following commands: <br>
+> \> `git gush origin other_branch`
+
+----
+
 ### `gout [-b] <branch_name>`
 
 #### Options:
@@ -134,7 +134,7 @@ Current branch: **b_CUSTOMPREFIX_1234**
   * ~~Actually, it will accept any of `git branch` standard options.~~
 
 #### Arguments:
-* `\<branch_name\>`: The branch which will be switched to.
+* `<branch_name>`: The branch which will be switched to.
 
 #### Description:
 
