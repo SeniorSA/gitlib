@@ -88,6 +88,7 @@ If the branch name contains a task number, it'll be used in the commit message, 
 
 **IMPORTANT**: The commit message passed as argument is customized based on the **current branch name**. If the branch name match the pattern:
 * b_task_1234: The message will be formatted using the task number 1234.
+* b_PREFIX_1234: The message will be formatted using the task prefix PREFIX and task number 1234.
 
 IF the commit prefix is `REVERT`, instead of asking for the task number, you'll be prompted to speficy the ID of the target commit (SHA1 hash).
 
@@ -114,7 +115,15 @@ Current branch: **b_task_1234**
 > \# Will not ask the task number <br>
 > \# Will result in the following commands: <br>
 > \> `git add .` <br>
-> \> `git commit -m "[FIX][#PREFIX-1234]: Added the save button click event"`
+> \> `git commit -m "[FIX][#PREFIX-1234]: Fixed the save button click event"`
+
+Current branch: **b_CUSTOMPREFIX_1234**
+> \> `gcommit "Added the save button click event"` <br>
+> \> Answer 1: FEAT <br>
+> \# Will not ask the task number <br>
+> \# Will result in the following commands: <br>
+> \> `git add .` <br>
+> \> `git commit -m "[FEAT][#CUSTOMPREFIX-1234]: Added the save button click event"`
 
 ----
 
