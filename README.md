@@ -1,6 +1,6 @@
 # GitLib
 
-> [@seniorsistemas version](https://github.com/seniorsistemas)
+> [@SeniorSA version](https://github.com/SeniorSA)
 
 **GitLib** is a library of utility functions for daily/commonly used Git commands.
 It provides methods to ease usage of some Git commands and to standardizing processes and commit messages.
