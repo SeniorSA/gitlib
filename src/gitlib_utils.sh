@@ -111,17 +111,14 @@ _do_commit() {
 		_request_task_number() {
 			task=""
 			branch=$(_get_curr_branch);
+			commit_prefix="$GL_DEFAULT_TASK_PREFIX"
 
 			if [[ $branch == *b_task_* ]]; then
-				task="${1#*b_task_}"
+				task="${branch#*b_task_}"
 
-			fi
-			
-			if [[ $branch =~ ^b_([[:alpha:]]+)_([[:digit:]]+)$ ]]; then
+			elif [[ $branch =~ ^b_([[:alpha:]]+)_([[:digit:]]+)$ ]]; then
 				commit_prefix="${BASH_REMATCH[1]}"
 				task="${BASH_REMATCH[2]}"
-			else
-				commit_prefix="$GL_DEFAULT_TASK_PREFIX"
 			fi
 
 			if [[ -z "$commit_prefix" ]]; then
