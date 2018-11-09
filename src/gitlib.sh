@@ -28,7 +28,7 @@ GL_LOGLEVEL=2 #INFO
 # --------------------
 
 gcommit() {
-	branch=$(_get_curr_branch);
+	branch=$(_get_current_git_branch);
 	args=${@##-*}
 	
 	if [ -z "$branch" ]; then
@@ -71,7 +71,7 @@ gpull() {
 	if [ $# -eq 1 ]; then
 		branch="$1"
 	else
-		branch=$(_get_curr_branch)
+		branch=$(_get_current_git_branch)
 	fi
 	
     if [ $branch == "." ]; then
@@ -96,7 +96,7 @@ gpush() {
 	if [ $# -eq 1 ]; then
 		branch="$1"
 	else
-		branch=$(_get_curr_branch)
+		branch=$(_get_current_git_branch)
 	fi
 	
 	_log debug "Pushing to branch $branch"
@@ -128,7 +128,7 @@ gout() {
 }
 
 gmerge() {
-	branch=$(_get_curr_branch)
+	branch=$(_get_current_git_branch)
 	
 	if [ -z "$branch" ]; then
         _log err "Current directory is not a git repository"
@@ -154,6 +154,17 @@ gstatus() {
     _log debug "git status"
 	if [ "$GL_DEBUG_MODE_ENABLED" = false ]; then
 		git status
+	fi
+}
+
+glog() {
+	username="$(git config user.name)"
+	if [ -n $username ]; then
+		_log debug "git log --author=$username"
+		git log --author="$username"
+	else
+		_log debug "git log"
+		git log
 	fi
 }
 

@@ -49,7 +49,7 @@ _getopts() {
 }
 
 # Returns the current branch name. e.g.: master
-_get_curr_branch() {
+_get_current_git_branch() {
 	git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/'
 }
 
@@ -58,7 +58,7 @@ _hasUnpushedCommitsFor() {
 }
 
 _hasUnpushedCommits() {
-    branch="$(_get_curr_branch)"
+    branch="$(_get_current_git_branch)"
     return $(_hasUnpushedCommitsFor $branch)
 }
 
@@ -110,7 +110,7 @@ _do_commit() {
 
 		_request_task_number() {
 			task=""
-			branch=$(_get_curr_branch);
+			branch=$(_get_current_git_branch);
 			commit_prefix="$GL_DEFAULT_TASK_PREFIX"
 
 			if [[ $branch == *b_task_* ]]; then
