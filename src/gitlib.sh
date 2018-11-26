@@ -158,13 +158,27 @@ gstatus() {
 }
 
 glog() {
-	username="$(git config user.name)"
-	if [ -n $username ]; then
-		_log debug "git log --author=$username"
-		git log --author="$username"
-	else
-		_log debug "git log"
-		git log
+	all_authors=false
+	
+	let "OPTIND = 1";
+	while getopts "a" opcao
+	do
+		case "$opcao" in
+			"a") all_authors=true ;;
+		esac
+	done
+
+	git_username=""
+	if [ "$all_authors" = false ]; then
+		git_username="$(git config user.name)"
+	fi
+
+	date_format="%d/%m/%Y-%H:%M:%S"
+	log_format="%C(yellow)%h%x20%Cgreen%an%Creset%x20%ad%x20%n%s%n"
+
+	_log debug "git log --author=\"$git_username\" --pretty=format:\"$log_format\" --date=format:\"$date_format\""
+	if [ "$GL_DEBUG_MODE_ENABLED" = false ]; then
+		git log --author="$git_username" --pretty=format:"$log_format" --date=format:"$date_format"
 	fi
 }
 
@@ -212,7 +226,7 @@ gconfig() {
                 war* )   let "GL_LOGLEVEL = 1" ;;
                 inf* )   let "GL_LOGLEVEL = 2" ;;
                 debug* ) let "GL_LOGLEVEL = 3" ;;
-                *) _log err "Log level must be: error, warn, info or debug."
+                *) _log err "Log level must be: error/err, warn/war, info/inf or debug."
             esac
             ;;
 
