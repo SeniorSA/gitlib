@@ -116,8 +116,8 @@ _do_commit() {
 			if [[ $branch == *b_task_* ]]; then
 				task="${branch#*b_task_}"
 
-			elif [[ $branch =~ ^b_([[:alpha:]]+)_([[:digit:]]+)$ ]]; then
-				commit_prefix="${BASH_REMATCH[1]}"
+			elif [[ $branch =~ ^b_([[:alpha:]]+)_([[:digit:]]+)$ || $branch =~ ^feature\/([[:alpha:]]+)-([[:digit:]]+)$ ]]; then
+				commit_prefix="${BASH_REMATCH[1]^^}" ## ^^ = to uppercase
 				task="${BASH_REMATCH[2]}"
 			fi
 
@@ -137,7 +137,7 @@ or use 'gconfig default-task-prefix <prefix>' to configure the default prefix."
 					read -p "> " response
 
 					if [[ $response =~ ^[YySs]$ ]]; then
-						task=0
+						task='NO-TASK'
 						break
 
 					elif [[ $response =~ ^[Nn]$ ]]; then
