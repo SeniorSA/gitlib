@@ -107,16 +107,31 @@ gpush() {
 	fi
 }
 
+# -l: choose branch to checkout
 gout() {
+	branch_to_checkout=""
+
+	let "OPTIND = 1";
+	while getopts "l" opcao
+	do
+		case "$opcao" in
+			"l") _choose_branch branch_to_checkout ;;
+		esac
+	done
+
 	if [ $# -eq 1 ]; then
-        _log debug "Switching current branch to $1"
-        _log debug "git checkout $1"
+		if [ -z "$branch_to_checkout" ]; then
+			branch_to_checkout="$1"
+		fi
+
+        _log info "Switching current branch to $branch_to_checkout"
+        _log debug "git checkout $branch_to_checkout"
 		if [ "$GL_DEBUG_MODE_ENABLED" = false ]; then
-			git checkout "$1"
+			git checkout "$branch_to_checkout"
 		fi
         
 	elif [ $# -eq 2 ]; then
-        _log debug "Switching current branch to $2"
+        _log info "Switching current branch to $2"
         _log debug "git checkout $1 $2"
 		if [ "$GL_DEBUG_MODE_ENABLED" = false ]; then
 			git checkout "$1" "$2"
@@ -127,26 +142,41 @@ gout() {
 	fi
 }
 
+# -l: choose branch to merge
 gmerge() {
-	branch=$(_get_current_git_branch)
-	
-	if [ -z "$branch" ]; then
+	current_branch=$(_get_current_git_branch)
+	branch_to_merge=""
+
+	if [ -z "$current_branch" ]; then
         _log err "Current directory is not a git repository"
-		
-	elif [[ $# -gt 0 && -n $1 ]]; then
-		_log info "Step 1: Pulling from current branch..."
-		if [ "$GL_DEBUG_MODE_ENABLED" = false ]; then
-			gpull
-		fi
-		
-		_log info "Step 2: Merging $1 -> $branch"
-		_log debug "git merge $1"
-		if [ "$GL_DEBUG_MODE_ENABLED" = false ]; then
-			git merge "$1"
-		fi
-		
-	else
-		_log err "Branch name not specified"
+	fi
+
+	let "OPTIND = 1";
+	while getopts "l" opcao
+	do
+		case "$opcao" in
+			"l") _choose_branch branch_to_merge ;;
+		esac
+	done
+
+	if [[ -z "$branch_to_merge" && $# -eq 1 && "$1" != "-l" ]]; then
+		branch_to_merge="$1"
+	fi
+
+	if [ -z "$branch_to_merge" ]; then
+		_log err "Branch to merge not specified"
+		return 1;
+	fi
+
+	_log info "Step 1: Pulling from current branch..."
+	if [ "$GL_DEBUG_MODE_ENABLED" = false ]; then
+		gpull
+	fi
+	
+	_log info "Step 2: Merging $branch_to_merge -> $current_branch"
+	_log debug "git merge $branch_to_merge"
+	if [ "$GL_DEBUG_MODE_ENABLED" = false ]; then
+		git merge "$branch_to_merge"
 	fi
 }
 
