@@ -22,6 +22,7 @@
 # --------------------
 
 GL_NO_COLOR="\033[0m"
+GL_BOLD="\033[1m"
 GL_RED="\033[0;31m"
 GL_GREEN="\033[0;32m"
 GL_CYAN="\033[0;36m"
@@ -71,6 +72,31 @@ _trim() {
     # remove trailing whitespace characters
     text="${text%"${text##*[![:space:]]}"}"   
     echo -n "$text"
+}
+
+# if _yes_no "message"; then
+#	[...]
+# fi
+_yes_no() {
+	continue_msg="(y/n)"
+    # input_message="Deseja Prosseguir? (y/n)`echo $'\n> '`"
+    # read -p "Mensagem. $input_message" input
+    retval=0
+    
+	echo "$1 $continue_msg"
+    while true; do
+        read -p "> " -n 1 response
+        case $response in
+            [SsYy]* ) retval=0; break;;
+            [Nn]* ) retval=1; break;;
+            *) echo ""
+        esac
+
+		echo $continue_msg
+    done
+    
+    echo "" # quebra de linha para próximos comandos
+    return "$retval"
 }
 
 # - Functions
@@ -239,4 +265,30 @@ _format_tasks_message() {
 	done
 
 	expr "$(_trim $tasks_message)"
+}
+
+# Returns a string containing known branches separated by space.
+_get_git_branches_str() {
+	# Returns branches lists, one by line then replaces spaces and '*' character (current branch identifier).
+	branches=$(git branch --list | sed -E 's/(^\*|[[:space:]])//g')
+	# Replaces all line breaks by space, thus, resulting in an string with branches separated by space.
+	expr "$branches" | tr '\n' ' '
+}
+
+# $1 = variable to write branch name to
+_choose_branch() {
+	branches_str=$(_get_git_branches_str)
+
+	_select_option $branches_str
+	selectedOption=$?
+
+	branches_array=($branches_str)
+	selected_branch="${branches_array[selectedOption]}"
+	unset branches_array
+
+	if [ -n "$1" ]; then
+		read -ra $1 <<< "$selected_branch"
+	else
+		expr "$selected_branch"
+	fi
 }

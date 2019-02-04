@@ -182,6 +182,49 @@ glog() {
 	fi
 }
 
+gbranch() {
+	delete_local=false
+	delete_remote=false
+
+	let "OPTIND = 1";
+	while getopts "dD" opcao
+	do
+		case "$opcao" in
+			"d" )
+				delete_local=true
+				echo -e "Which branch do you want do delete ${GL_BOLD}LOCALLY${GL_NO_COLOR}?"
+				_choose_branch selected_branch
+
+				_log debug "git branch -d $selected_branch"
+				if [ "$GL_DEBUG_MODE_ENABLED" = false ]; then
+					git branch -d "$selected_branch"
+				fi
+				;;
+			"D" )
+				delete_remote=true
+				echo -e "Which branch do you want do delete ${GL_BOLD}REMOTELY${GL_NO_COLOR}?"
+				_choose_branch selected_branch
+
+				if _yes_no "Are you sure you want to delete remote branch "$selected_branch"? This action cannot be undone."; then
+					_log debug "git push origin --delete $selected_branch"
+					if [ "$GL_DEBUG_MODE_ENABLED" = false ]; then
+						git push origin --delete "$selected_branch"
+					fi
+				else
+					_log warn "Remote branch deletion aborted."
+				fi
+				;;
+			"?" ) _log warn "Unknown option \"$OPTARG\"" ;;
+			":" ) _log err "Arguments not specified for option \"$OPTARG\"" ;;
+		esac
+	done
+
+	if [ "$delete_local" = false ] && [ "$delete_remote" = false ]; then
+		_log debug "git branch --list"
+		git branch --list
+	fi
+}
+
 # Undo all local commits and changes (stagged and unstagged). 
 greset() {
 	continue_msg="(y/n)"
@@ -193,12 +236,12 @@ greset() {
 		if [[ $response =~ ^[YySs]$ ]]; then
 			_log debug "git checkout ."
 			_log debug "git reset ."
-			_log debug "git reset --soft HEAD"
+			_log debug "git reset --hard HEAD"
 
 			if [ "$GL_DEBUG_MODE_ENABLED" = false ]; then
 				git checkout . 
 				git reset .
-				git reset --soft HEAD
+				git reset --hard HEAD
 			fi
 			break
 
