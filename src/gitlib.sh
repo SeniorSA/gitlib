@@ -68,42 +68,76 @@ gcommit() {
 }
 
 gpull() {
-	if [ $# -eq 1 ]; then
-		branch="$1"
-	else
-		branch=$(_get_current_git_branch)
+	branch_to_pull=""
+
+	let "OPTIND = 1";
+	while getopts "lo" opcao
+	do
+		case "$opcao" in
+			"l")
+				if ! _choose_branch branch_to_pull ; then
+					return $?
+				fi
+				;;
+			"o")
+				branch_to_pull="." # origin
+				;;
+		esac
+	done
+
+	if [ -z "$branch_to_pull" ]; then
+		if [ $# -eq 1 ]; then
+			branch_to_pull="$1"
+		else
+			branch_to_pull=$(_get_current_git_branch)
+		fi
 	fi
-	
-    if [ $branch == "." ]; then
+
+    if [ "$branch_to_pull" == "." ]; then
         _log debug "Pulling from origin"
         _log debug "git pull origin"
 
 		if [ "$GL_DEBUG_MODE_ENABLED" = false ]; then
         	git pull origin
 		fi
-        
     else
-        _log debug "Pulling from branch $branch"
-        _log debug "git pull origin $branch"
+        _log debug "Pulling from branch $branch_to_pull"
+        _log debug "git pull origin $branch_to_pull"
 
 		if [ "$GL_DEBUG_MODE_ENABLED" = false ]; then
-        	git pull origin "$branch"
+        	git pull origin "$branch_to_pull"
 		fi
     fi
 }
 
 gpush() {
-	if [ $# -eq 1 ]; then
-		branch="$1"
-	else
-		branch=$(_get_current_git_branch)
+	branch_to_push=""
+
+	let "OPTIND = 1";
+	while getopts "l" opcao
+	do
+		case "$opcao" in
+			"l")
+				if ! _choose_branch branch_to_push ; then
+					return $?
+				fi
+				;;
+		esac
+	done
+
+	if [ -z "$branch_to_push" ]; then
+		if [ $# -eq 1 ]; then
+			branch_to_push="$1"
+		else
+			branch_to_push=$(_get_current_git_branch)
+		fi
 	fi
 	
-	_log debug "Pushing to branch $branch"
-	_log debug "git push origin $branch"
+	_log debug "Pushing to branch $branch_to_push"
+	_log debug "git push origin $branch_to_push"
 	
 	if [ "$GL_DEBUG_MODE_ENABLED" = false ]; then
-		git push origin "$branch"
+		git push origin "$branch_to_push"
 	fi
 }
 
@@ -115,7 +149,10 @@ gout() {
 	while getopts "l" opcao
 	do
 		case "$opcao" in
-			"l") _choose_branch branch_to_checkout ;;
+			"l") 
+				if ! _choose_branch branch_to_checkout ; then
+					return $?
+				fi
 		esac
 	done
 
@@ -155,7 +192,11 @@ gmerge() {
 	while getopts "l" opcao
 	do
 		case "$opcao" in
-			"l") _choose_branch branch_to_merge ;;
+			"l") 
+				if ! _choose_branch branch_to_merge ; then
+					return $?
+				fi
+				;;
 		esac
 	done
 
@@ -223,25 +264,25 @@ gbranch() {
 			"d" )
 				delete_local=true
 				echo -e "Which branch do you want do delete ${GL_BOLD}LOCALLY${GL_NO_COLOR}?"
-				_choose_branch selected_branch
-
-				_log debug "git branch -d $selected_branch"
-				if [ "$GL_DEBUG_MODE_ENABLED" = false ]; then
-					git branch -d "$selected_branch"
+				if _choose_branch selected_branch ; then
+					_log debug "git branch -d $selected_branch"
+					if [ "$GL_DEBUG_MODE_ENABLED" = false ]; then
+						git branch -d "$selected_branch"
+					fi
 				fi
 				;;
 			"D" )
 				delete_remote=true
 				echo -e "Which branch do you want do delete ${GL_BOLD}REMOTELY${GL_NO_COLOR}?"
-				_choose_branch selected_branch
-
-				if _yes_no "Are you sure you want to delete remote branch "$selected_branch"? This action cannot be undone."; then
-					_log debug "git push origin --delete $selected_branch"
-					if [ "$GL_DEBUG_MODE_ENABLED" = false ]; then
-						git push origin --delete "$selected_branch"
+				if _choose_branch selected_branch ; then
+					if _yes_no "Are you sure you want to delete remote branch "$selected_branch"? This action cannot be undone."; then
+						_log debug "git push origin --delete $selected_branch"
+						if [ "$GL_DEBUG_MODE_ENABLED" = false ]; then
+							git push origin --delete "$selected_branch"
+						fi
+					else
+						_log warn "Remote branch deletion aborted."
 					fi
-				else
-					_log warn "Remote branch deletion aborted."
 				fi
 				;;
 			"?" ) _log warn "Unknown option \"$OPTARG\"" ;;
@@ -250,8 +291,8 @@ gbranch() {
 	done
 
 	if [ "$delete_local" = false ] && [ "$delete_remote" = false ]; then
-		_log debug "git branch --list"
-		git branch --list
+		_log debug "git branch --list --all"
+		git branch --list --all
 	fi
 }
 

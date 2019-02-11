@@ -269,24 +269,28 @@ _format_tasks_message() {
 
 # Returns a string containing known branches separated by space.
 _get_git_branches_str() {
-	# Returns branches lists, one by line then replaces spaces and '*' character (current branch identifier).
-	branches=$(git branch --list | sed -E 's/(^\*|[[:space:]])//g')
+	# Returns all remote branches, one by line, removes first line 'HEAD',
+	# then replaces spaces (followed by origin/) and '*' character (current branch identifier).
+	branches=$(git branch --list --all --remote | sed -e '1d' | sed -E 's/(^\*|[[:space:]](origin\/)?)//g')
 	# Replaces all line breaks by space, thus, resulting in an string with branches separated by space.
 	expr "$branches" | tr '\n' ' '
 }
 
 # $1 = variable to write branch name to
 _choose_branch() {
-	branches_str=$(_get_git_branches_str)
+	cancel_option="--CANCEL--"
+	branches_str="$(_get_git_branches_str) $cancel_option"
 
 	_select_option $branches_str
-	selectedOption=$?
+	selected_option=$?
 
 	branches_array=($branches_str)
-	selected_branch="${branches_array[selectedOption]}"
+	selected_branch="${branches_array[selected_option]}"
 	unset branches_array
 
-	if [ -n "$1" ]; then
+	if [ "$selected_branch" == "$cancel_option" ]; then
+		return 1;
+	elif [ -n "$1" ]; then
 		read -ra $1 <<< "$selected_branch"
 	else
 		expr "$selected_branch"
