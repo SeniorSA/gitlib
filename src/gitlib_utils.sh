@@ -269,17 +269,19 @@ _format_tasks_message() {
 
 # Returns a string containing known branches separated by space.
 _get_git_branches_str() {
+	LINE_BREAK='
+'
 	# Returns all remote branches, one by line, removes first line 'HEAD',
 	# then replaces spaces (followed by origin/) and '*' character (current branch identifier).
 	remote_branches=$(git branch --list --remote | sed -e '1d' | sed -E 's/(^\*|[[:space:]](origin\/)?)//g')
-	local_branches=$(git branch --list --all | sed -E 's/(^\*|[[:space:]](remotes\/origin\/)?|HEAD[[:space:]]->.*)//g')
+	local_branches=$(git branch --list --all | sed -E 's/(^\*|[[:space:]](remotes\/origin\/.*)?|HEAD[[:space:]]->.*)//g')
 
 	# Join remote and local branches
-	branches="$remote_branches $local_branches"
+	branches="$remote_branches$LINE_BREAK$local_branches"
 
 	# Sort and remove duplicates
 	branches=$(printf '%s\n' "$branches" | sort -u)
-	
+
 	# Replaces all line breaks by space, thus, resulting in an string with branches separated by space.
 	expr "$branches" | tr '\n' ' '
 }
