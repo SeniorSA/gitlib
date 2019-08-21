@@ -108,7 +108,7 @@ _yes_no() {
 # 	$3 - commits only already stagged files
 _do_commit() {
 	commit_message="$1"
-	commit_prefix="$2"
+	commit_task_prefix="$2"
 	stagged_only=$3
 	aborted=false
 
@@ -117,9 +117,9 @@ _do_commit() {
 
 	_format_commit_message() {
 		commit_refs=""
-		commit_task_prefix=""
+		commit_prefix=""
 
-		_request_commit_task_prefix() {
+		_request_commit_prefix() {
 			prefixes=(FIX FEAT TEST REFACTOR DOC REVERT CANCEL)
 
 			_select_option \
@@ -132,19 +132,18 @@ _do_commit() {
 				"CANCEL - Aborts the commit"
 
 			selectedOption=$?
-			commit_task_prefix="${prefixes[selectedOption]}"
+			commit_prefix="${prefixes[selectedOption]}"
 		}
 
 		_request_task_id() {
 			branch=$(_get_current_git_branch)
-			commit_prefix=""
 			task_ids=""
 
 			if [[ $branch == *b_task_* ]]; then
 				task_ids="${branch#*b_task_}"
 
 			elif [[ $branch =~ ^b_([[:alpha:]]+)_([[:digit:]]+)$ || $branch =~ ^feature\/([[:alpha:]]+)-([[:digit:]]+)$ ]]; then
-				commit_prefix="${BASH_REMATCH[1]^^}" ## ^^ = to uppercase
+				commit_task_prefix="${BASH_REMATCH[1]^^}" ## ^^ = to uppercase
 				task_ids="${BASH_REMATCH[2]}"
 
 			elif [[ $branch =~ ^feature\/([A-Za-z0-9_-]+)$ ]]; then
@@ -177,7 +176,7 @@ _do_commit() {
 				
 			fi
 
-			commit_refs=$(_format_tasks_message "$commit_prefix" "$task_ids")
+			commit_refs=$(_format_tasks_message "$commit_task_prefix" "$task_ids")
 		}
 
 		_request_commit_hash() {
@@ -206,19 +205,19 @@ _do_commit() {
 			commit_refs="$hash"
 		}
 
-		_request_commit_task_prefix
-		if [[ "$commit_task_prefix" = "CANCEL" ]]; then
+		_request_commit_prefix
+		if [[ "$commit_prefix" = "CANCEL" ]]; then
 			aborted=true
 			return "1"
 
-		elif [[ "$commit_task_prefix" = "REVERT" ]]; then
+		elif [[ "$commit_prefix" = "REVERT" ]]; then
 			_request_commit_hash
 
 		else
 			_request_task_id
 		fi
 
-		commit_message="[$commit_task_prefix][$commit_refs]: $1"
+		commit_message="[$commit_prefix][$commit_refs]: $1"
 	}
 
 	# Commit logic:
