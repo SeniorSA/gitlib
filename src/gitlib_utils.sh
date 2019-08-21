@@ -217,7 +217,11 @@ _do_commit() {
 			_request_task_id
 		fi
 
-		commit_message="[$commit_prefix][$commit_refs]: $1"
+		if [ -z "$commit_refs" ]; then
+			commit_message="[$commit_prefix]: $commit_message"
+		else
+			commit_message="[$commit_prefix][$commit_refs]: $commit_message"
+		fi
 	}
 
 	# Commit logic:
