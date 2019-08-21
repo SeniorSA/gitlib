@@ -107,16 +107,16 @@ _yes_no() {
 #   $2 - commit task prefix
 # 	$3 - commits only already stagged files
 _do_commit() {
+	commit_message="$1"
+	commit_prefix="$2"
 	stagged_only=$3
 	aborted=false
-	commit_message="$2"
 
 	# Auxiliar funcions are declared internally due to "returned values" and "echo" calls.
 	# If functions are called inside a command substituion, echoed messages cannot be seen.
 
 	_format_commit_message() {
 		commit_refs=""
-		commit_prefix=""
 		commit_task_prefix=""
 
 		_request_commit_task_prefix() {

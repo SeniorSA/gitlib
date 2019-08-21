@@ -35,28 +35,30 @@ gcommit() {
         _log err "Current directory is not a git repository"
     	return "1"
 
-    elif [ -z "$commit_message" ]; then
-        _log err "Please, insert a message to confirm the commit"
-		return "1"
-
     else
 		auto_push=false
 		stagged_only=false
 
 		let "OPTIND = 1";
-		while getopts "P:sp" opcao
+		while getopts "P:spm:" opcao
 		do
 			case "$opcao" in
 				"P") commit_task_prefix="$OPTARG" ;;
 				"s") stagged_only=true ;;
 				"p") auto_push=true ;;
+				"m") commit_message="$OPTARG" ;;
 				"?") _log warn "Unknown option \"$OPTARG\"" ;;
 				":") _log err "Arguments not specified for option \"$OPTARG\"" ;;
 			esac
 		done
 
-		if ! _do_commit "$commit_message" "$commit_task_prefix" $stagged_only; then
+		if [ -z "$commit_message" ]; then
+			_log err "Please, insert a message to confirm the commit"
 			return "1"
+
+		elif ! _do_commit "$commit_message" "$commit_task_prefix" $stagged_only; then
+			return "1"
+
 		fi
 
 		if [ "$auto_push" = true ]; then
