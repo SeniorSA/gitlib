@@ -21,7 +21,6 @@
 # - Global Variables
 # --------------------
 
-GL_DEFAULT_TASK_PREFIX=""
 GL_LOGLEVEL=2 #INFO
 
 # - Commands
@@ -29,13 +28,14 @@ GL_LOGLEVEL=2 #INFO
 
 gcommit() {
 	branch=$(_get_current_git_branch);
-	args=${@##-*}
+	commit_message="${@: -1}" # get last argument only
+	commit_task_prefix=""
 	
 	if [ -z "$branch" ]; then
         _log err "Current directory is not a git repository"
     	return "1"
 
-    elif [ -z "$args" ]; then
+    elif [ -z "$commit_message" ]; then
         _log err "Please, insert a message to confirm the commit"
 		return "1"
 
@@ -44,9 +44,10 @@ gcommit() {
 		stagged_only=false
 
 		let "OPTIND = 1";
-		while getopts "ps" opcao
+		while getopts "P:sp" opcao
 		do
 			case "$opcao" in
+				"P") commit_task_prefix="$OPTARG" ;;
 				"s") stagged_only=true ;;
 				"p") auto_push=true ;;
 				"?") _log warn "Unknown option \"$OPTARG\"" ;;
@@ -54,7 +55,7 @@ gcommit() {
 			esac
 		done
 
-		if ! _do_commit "$args" $stagged_only; then
+		if ! _do_commit "$commit_message" "$commit_task_prefix" $stagged_only; then
 			return "1"
 		fi
 
@@ -330,10 +331,6 @@ greset() {
 
 gconfig() {
 	 case $1 in
-        default-task-prefix )
-			GL_DEFAULT_TASK_PREFIX=$2
-            ;;
-
 		loglevel )
             case $2 in
                 err* )   let "GL_LOGLEVEL = 0" ;;

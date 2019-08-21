@@ -103,12 +103,13 @@ _yes_no() {
 # --------------------
 
 # args:
-# 	$1 - commit's message
-# 	$2 - commits only already stagged files
+# 	$1 - commit message
+#   $2 - commit task prefix
+# 	$3 - commits only already stagged files
 _do_commit() {
-	stagged_only=$2
+	stagged_only=$3
 	aborted=false
-	commit_message=""
+	commit_message="$2"
 
 	# Auxiliar funcions are declared internally due to "returned values" and "echo" calls.
 	# If functions are called inside a command substituion, echoed messages cannot be seen.
@@ -134,28 +135,24 @@ _do_commit() {
 			commit_task_prefix="${prefixes[selectedOption]}"
 		}
 
-		_request_task_number() {
-			task=""
-			branch=$(_get_current_git_branch);
-			commit_prefix="$GL_DEFAULT_TASK_PREFIX"
+		_request_task_id() {
+			branch=$(_get_current_git_branch)
+			commit_prefix=""
+			task_ids=""
 
 			if [[ $branch == *b_task_* ]]; then
-				task="${branch#*b_task_}"
+				task_ids="${branch#*b_task_}"
 
 			elif [[ $branch =~ ^b_([[:alpha:]]+)_([[:digit:]]+)$ || $branch =~ ^feature\/([[:alpha:]]+)-([[:digit:]]+)$ ]]; then
 				commit_prefix="${BASH_REMATCH[1]^^}" ## ^^ = to uppercase
-				task="${BASH_REMATCH[2]}"
+				task_ids="${BASH_REMATCH[2]}"
+
+			elif [[ $branch =~ ^feature\/([A-Za-z0-9_-]+)$ ]]; then
+				task_ids="${BASH_REMATCH[1]}"
+
 			fi
 
-			if [[ -z "$commit_prefix" ]]; then
-				_log err "Task prefix not specified! \
-Change branch name to the b_PREFIX_TASKNUMBER pattern \
-or use 'gconfig default-task-prefix <prefix>' to configure the default prefix."
-				aborted=true
-				return "1"
-			fi
-
-			if [ -z "$task" ]; then
+			if [ -z "$task_ids" ]; then
 			
 				continue_msg="Continue? (y/n/comma separated task numbers)"
 				echo "The task number could not be determined. $continue_msg"
@@ -163,7 +160,7 @@ or use 'gconfig default-task-prefix <prefix>' to configure the default prefix."
 					read -p "> " response
 
 					if [[ $response =~ ^[YySs]$ ]]; then
-						task='NO-TASK'
+						task_ids=""
 						break
 
 					elif [[ $response =~ ^[Nn]$ ]]; then
@@ -171,7 +168,7 @@ or use 'gconfig default-task-prefix <prefix>' to configure the default prefix."
 						return "1"
 
 					elif [[ $response =~ ^[[:digit:][:space:],]{1,}$ ]]; then
-						task="$response"
+						task_ids="$response"
 						break
 					fi
 
@@ -180,7 +177,7 @@ or use 'gconfig default-task-prefix <prefix>' to configure the default prefix."
 				
 			fi
 
-			commit_refs=$(_format_tasks_message "$commit_prefix" "$task")
+			commit_refs=$(_format_tasks_message "$commit_prefix" "$task_ids")
 		}
 
 		_request_commit_hash() {
@@ -218,7 +215,7 @@ or use 'gconfig default-task-prefix <prefix>' to configure the default prefix."
 			_request_commit_hash
 
 		else
-			_request_task_number
+			_request_task_id
 		fi
 
 		commit_message="[$commit_task_prefix][$commit_refs]: $1"
@@ -257,12 +254,25 @@ or use 'gconfig default-task-prefix <prefix>' to configure the default prefix."
 # 	$1 - task prefix
 # 	$2 - comma separated string containing the task numbers
 _format_tasks_message() {
-	IFS=',' read -ra taskNumbers <<< "$2"
 	tasks_message=""
+	task_prefix=""
+	task_ids=""
 
-	for taskNumber in "${taskNumbers[@]}"; do
-		tasks_message+="#$1-$(_trim $taskNumber) "
-	done
+	if [ -z "$2" ]; then
+		tasks_message="$1"
+	else
+		task_ids="$2"
+		if [ -z "$1" ]; then
+			task_prefix=""
+		else
+			task_prefix="$1-"
+		fi
+
+		IFS=',' read -ra task_id_array <<< "$task_ids"
+		for task_id in "${task_id_array[@]}"; do
+			tasks_message+="#$task_prefix$(_trim $task_id) "
+		done
+	fi
 
 	expr "$(_trim $tasks_message)"
 }
