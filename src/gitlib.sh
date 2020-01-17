@@ -147,39 +147,58 @@ gpush() {
 # -l: choose branch to checkout
 gout() {
 	branch_to_checkout=""
+	branch_to_checkout_prefix=""
+	new_branch=false
 
 	let "OPTIND = 1";
-	while getopts "l" opcao
+	while getopts "lbfrh" opcao
 	do
 		case "$opcao" in
 			"l") 
 				if ! _choose_branch branch_to_checkout ; then
 					return $?
 				fi
+				;;
+			"b") 
+				new_branch=true
+				;;
+			"f")
+				branch_to_checkout_prefix="feature/"
+				;;
+			"r")
+				branch_to_checkout_prefix="release/"
+				;;
+			"h")
+				branch_to_checkout_prefix="hotfix/"
+				;;
 		esac
 	done
 
-	if [ $# -eq 1 ]; then
-		if [ -z "$branch_to_checkout" ]; then
-			branch_to_checkout="$1"
+	if [ -z "$branch_to_checkout" ]; then
+		if [ -z "$1" ]; then
+			_log err "Branch name not specified"
+			return 1;
+		else 
+			branch_to_checkout="${@: -1}" # get last argument only
 		fi
+	fi
 
-        _log info "Switching current branch to $branch_to_checkout"
-        _log debug "git checkout $branch_to_checkout"
+	branch_to_checkout="$branch_to_checkout_prefix$branch_to_checkout"
+
+	if [ "$new_branch" = true ]; then
+		_log info "Switching current branch to new branch $branch_to_checkout"
+		_log debug "git checkout -b $branch_to_checkout"
+		if [ "$GL_DEBUG_MODE_ENABLED" = false ]; then
+			git checkout -b "$branch_to_checkout"
+		fi
+	else
+		_log info "Switching current branch to $branch_to_checkout"
+		_log debug "git checkout $branch_to_checkout"
 		if [ "$GL_DEBUG_MODE_ENABLED" = false ]; then
 			git checkout "$branch_to_checkout"
 		fi
-        
-	elif [ $# -eq 2 ]; then
-        _log info "Switching current branch to $2"
-        _log debug "git checkout $1 $2"
-		if [ "$GL_DEBUG_MODE_ENABLED" = false ]; then
-			git checkout "$1" "$2"
-		fi
-        
-	else
-		_log err "Branch name not specified"
 	fi
+
 }
 
 # -l: choose branch to merge
