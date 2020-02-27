@@ -142,19 +142,50 @@ _do_commit() {
 			if [[ $branch == *b_task_* ]]; then
 				task_ids="${branch#*b_task_}"
 
-			elif [[ $branch =~ ^b_([[:alpha:]]+)_([[:digit:]]+)$ || $branch =~ ^feature\/([[:alpha:]]+)-([[:digit:]]+)$ ]]; then
+			elif [[ $branch =~ ^release\/(.*) ]]; then
+				commit_task_prefix=""
+				task_ids=""
+
+			elif [[ $branch =~ ^b_([[:alpha:]]+)_([[:digit:]]+)$ || $branch =~ ^[[:alpha:]]+\/([[:alpha:]]+)-([[:digit:]]+)$ ]]; then
 				commit_task_prefix="${BASH_REMATCH[1]^^}" ## ^^ = to uppercase
 				task_ids="${BASH_REMATCH[2]}"
 
-			elif [[ $branch =~ ^feature\/([A-Za-z0-9_-]+)$ ]]; then
+			elif [[ $branch =~ ^[[:alpha:]]+\/([A-Za-z0-9_-]+)$ ]]; then
 				task_ids="${BASH_REMATCH[1]}"
 
 			fi
 
+			# -- Prompt commit_task_prefix --
+			if [ -z "$commit_task_prefix" ]; then
+			
+				continue_msg="Continue? (y/n/task prefix)"
+				echo "The task PREFIX could not be determined. $continue_msg"
+				while true; do
+					read -p "> " response
+
+					if [[ $response =~ ^[YySs]$ ]]; then
+						commit_task_prefix=""
+						break
+
+					elif [[ $response =~ ^[Nn]$ ]]; then
+						aborted=true
+						return "1"
+
+					elif [[ $response =~ ^[[:alnum:]]+$ ]]; then
+						commit_task_prefix="$response"
+						break
+					fi
+
+					echo $continue_msg
+				done
+				
+			fi
+
+			# -- Prompt task_ids --
 			if [ -z "$task_ids" ]; then
 			
 				continue_msg="Continue? (y/n/comma separated task numbers)"
-				echo "The task number could not be determined. $continue_msg"
+				echo "The task NUMBER(S) could not be determined. $continue_msg"
 				while true; do
 					read -p "> " response
 
@@ -175,6 +206,7 @@ _do_commit() {
 				done
 				
 			fi
+			# -- --------------- --
 
 			commit_refs=$(_format_tasks_message "$commit_task_prefix" "$task_ids")
 		}
