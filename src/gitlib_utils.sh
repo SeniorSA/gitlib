@@ -148,7 +148,7 @@ _do_commit() {
 				commit_task_prefix=""
 				task_ids=""
 
-			elif [[ $branch =~ ^b_([[:alpha:]]+)_([[:digit:]]+)$ || $branch =~ ^[[:alpha:]]+\/([[:alpha:]]+)-([[:digit:]]+)$ ]]; then
+			elif [[ $branch =~ ^b_([[:alnum:]]+)_([[:digit:]]+)$ || $branch =~ ^[[:alpha:]]+\/([[:alnum:]]+)-([[:digit:]]+)$ ]]; then
 				commit_task_prefix="${BASH_REMATCH[1]^^}" ## ^^ = to uppercase
 				task_ids="${BASH_REMATCH[2]}"
 
