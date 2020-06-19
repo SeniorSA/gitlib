@@ -106,10 +106,12 @@ _yes_no() {
 # 	$1 - commit message
 #   $2 - commit task prefix
 # 	$3 - commits only already stagged files
+#   $4 - yess to all
 _do_commit() {
 	commit_message="$1"
 	commit_task_prefix="$2"
 	stagged_only=$3
+	yesToAll=$4
 	aborted=false
 
 	# Auxiliar funcions are declared internally due to "returned values" and "echo" calls.
@@ -156,7 +158,10 @@ _do_commit() {
 			fi
 
 			# -- Prompt commit_task_prefix --
-			if [ -z "$commit_task_prefix" ]; then
+			if [ "$yesToAll" = true ]; then
+				commit_task_prefix=""
+
+			elif [ -z "$commit_task_prefix" ]; then
 			
 				continue_msg="Continue? (y/n/task prefix)"
 				echo "The task PREFIX could not be determined. $continue_msg"
@@ -182,7 +187,10 @@ _do_commit() {
 			fi
 
 			# -- Prompt task_ids --
-			if [ -z "$task_ids" ]; then
+			if [ "$yesToAll" = true ]; then
+				task_ids=""
+
+			elif [ -z "$task_ids" ]; then
 			
 				continue_msg="Continue? (y/n/comma separated task numbers)"
 				echo "The task NUMBER(S) could not be determined. $continue_msg"

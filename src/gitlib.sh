@@ -30,6 +30,7 @@ gcommit() {
 	branch=$(_get_current_git_branch);
 	commit_message="${@: -1}" # get last argument only
 	commit_task_prefix=""
+	yesToAll=false
 	
 	if [ -z "$branch" ]; then
         _log err "Current directory is not a git repository"
@@ -40,13 +41,14 @@ gcommit() {
 		stagged_only=false
 
 		let "OPTIND = 1";
-		while getopts "P:spm:" opcao
+		while getopts "P:spym:" opcao
 		do
 			case "$opcao" in
 				"P") commit_task_prefix="$OPTARG" ;;
 				"s") stagged_only=true ;;
 				"p") auto_push=true ;;
 				"m") commit_message="$OPTARG" ;;
+				"y") yesToAll=true ;;
 				"?") _log warn "Unknown option \"$OPTARG\"" ;;
 				":") _log err "Arguments not specified for option \"$OPTARG\"" ;;
 			esac
@@ -56,7 +58,7 @@ gcommit() {
 			_log err "Please, insert a message to confirm the commit"
 			return "1"
 
-		elif ! _do_commit "$commit_message" "$commit_task_prefix" $stagged_only; then
+		elif ! _do_commit "$commit_message" "$commit_task_prefix" $stagged_only $yesToAll; then
 			return "1"
 
 		fi
