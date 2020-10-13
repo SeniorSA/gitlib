@@ -5,7 +5,7 @@
 # - GITLIB
 # - Library of utility functions and standardizing for daily/commonly used
 # - GIT commands
-# - Version: 1.1-SENIOR
+# - Version: 1.2-SENIOR
 # - 
 # - Author: Luiz Felipe Nazari
 # -         luiz.nazari.42@gmail.com
@@ -122,16 +122,17 @@ _do_commit() {
 		commit_prefix=""
 
 		_request_commit_prefix() {
-			prefixes=(FIX FEAT TEST REFACTOR DOC REVERT CANCEL)
+			prefixes=(BLANK FIX FEAT TEST REFACTOR DOC REVERT CANCEL)
 
 			_select_option \
+				"BLANK - Nenhum prefixo de atividade." \
 				"FIX - Correções." \
 				"FEAT - Novas implementações (funcionalidades, telas, etc.)." \
 				"TEST - Alterações referentes a testes (adicionar testes, corrigir antigos, refatorá-los, etc.)." \
 				"REFACTOR - Refatoração de código existente (melhorar performance de um método, retirar duplicação de código, etc.)." \
 				"DOC - Correção ou implementação de documentação." \
 				"REVERT - Reverter algum commit anterior." \
-				"CANCEL - Aborts the commit"
+				"CANCEL - Aborta o commit"
 
 			selectedOption=$?
 			commit_prefix="${prefixes[selectedOption]}"
@@ -164,7 +165,7 @@ _do_commit() {
 			elif [ -z "$commit_task_prefix" ]; then
 			
 				continue_msg="Continue? (y/n/task prefix)"
-				echo "The task PREFIX could not be determined. $continue_msg"
+				echo "The TASK PREFIX could not be determined. $continue_msg"
 				while true; do
 					read -p "> " response
 
@@ -258,9 +259,15 @@ _do_commit() {
 		fi
 
 		if [ -z "$commit_refs" ]; then
-			commit_message="[$commit_prefix]: $commit_message"
+			if [ "$commit_prefix" != "BLANK" ]; then
+				commit_message="[$commit_prefix]: $commit_message"
+			fi
 		else
-			commit_message="[$commit_prefix][$commit_refs]: $commit_message"
+			if [ "$commit_prefix" = "BLANK" ]; then
+				commit_message="[$commit_refs]: $commit_message"
+			else
+				commit_message="[$commit_prefix][$commit_refs]: $commit_message"
+			fi
 		fi
 	}
 
